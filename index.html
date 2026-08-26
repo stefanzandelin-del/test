@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Stopwatch</title>
+
+<!-- iPhone "Add to Home Screen" support -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Stopwatch">
+<meta name="theme-color" content="#000000">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+
+<style>
+  :root {
+    --green: #30d158;
+    --red: #ff453a;
+    --gray: #2c2c2e;
+    --gray-light: #3a3a3c;
+    --text-dim: #8e8e93;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: #000;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Helvetica, Arial, sans-serif;
+    overscroll-behavior: none;
+    user-select: none;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    min-height: 100%;
+  }
+
+  .time-display {
+    flex: 0 0 auto;
+    margin-top: max(12vh, 60px);
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+  .time-main {
+    font-size: 17vw;
+    font-weight: 200;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  .time-hs {
+    font-size: 7vw;
+    font-weight: 200;
+    color: var(--text-dim);
+    min-width: 2.2ch;
+  }
+
+  .controls {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 24px;
+    margin-top: 8vh;
+  }
+  .btn {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    border: none;
+    font-size: 17px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray);
+    color: #fff;
+    transition: opacity 0.1s;
+  }
+  .btn:active { opacity: 0.7; }
+  .btn.start { background: rgba(48, 209, 88, 0.15); color: var(--green); border: 1px solid rgba(48,209,88,0.4); }
+  .btn.stop { background: rgba(255, 69, 58, 0.15); color: var(--red); border: 1px solid rgba(255,69,58,0.4); }
+  .btn.disabled { opacity: 0.4; }
+
+  .laps {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 500px;
+    margin-top: 6vh;
+    padding: 0 24px;
+    overflow-y: auto;
+  }
+  .lap-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 4px;
+    border-bottom: 1px solid var(--gray-light);
+    font-size: 17px;
+    font-variant-numeric: tabular-nums;
+  }
+  .lap-row .lap-label { color: #fff; }
+  .lap-row.best .lap-label { color: var(--green); }
+  .lap-row.worst .lap-label { color: var(--red); }
+  .lap-row .lap-time { color: #fff; }
+
+  .laps::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+
+  <div class="time-display">
+    <span class="time-main" id="timeMain">00:00</span><span class="time-hs" id="timeHs">.00</span>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="lapResetBtn">Lap</button>
+    <button class="btn start" id="startStopBtn">Start</button>
+  </div>
+
+  <div class="laps" id="laps"></div>
+
+<script>
+(function () {
+  const STORAGE_KEY = 'stopwatch_state_v1';
+
+  const timeMainEl = document.getElementById('timeMain');
+  const timeHsEl = document.getElementById('timeHs');
+  const startStopBtn = document.getElementById('startStopBtn');
+  const lapResetBtn = document.getElementById('lapResetBtn');
+  const lapsEl = document.getElementById('laps');
+
+  // state: running bool, startEpoch (ms, when current run segment began),
+  // elapsedBeforeStart (ms accumulated from previous segments), laps: [{elapsed}]
+  let state = {
+    running: false,
+    startEpoch: 0,
+    elapsedBeforeStart: 0,
+    laps: []
+  };
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) state = Object.assign(state, JSON.parse(raw));
+    } catch (e) { /* ignore corrupt state */ }
+  }
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function currentElapsed() {
+    if (state.running) {
+      return state.elapsedBeforeStart + (Date.now() - state.startEpoch);
+    }
+    return state.elapsedBeforeStart;
+  }
+
+  function formatTime(ms) {
+    const totalHs = Math.floor(ms / 10); // hundredths
+    const hs = totalHs % 100;
+    const totalSec = Math.floor(totalHs / 100);
+    const sec = totalSec % 60;
+    const totalMin = Math.floor(totalSec / 60);
+    const min = totalMin % 60;
+    const hr = Math.floor(totalMin / 60);
+    const pad2 = n => String(n).padStart(2, '0');
+    const main = hr > 0 ? `${pad2(hr)}:${pad2(min)}:${pad2(sec)}` : `${pad2(min)}:${pad2(sec)}`;
+    return { main, hs: '.' + pad2(hs) };
+  }
+
+  function render() {
+    const elapsed = currentElapsed();
+    const { main, hs } = formatTime(elapsed);
+    timeMainEl.textContent = main;
+    timeHsEl.textContent = hs;
+
+    if (state.running) {
+      startStopBtn.textContent = 'Stop';
+      startStopBtn.classList.remove('start');
+      startStopBtn.classList.add('stop');
+      lapResetBtn.textContent = 'Lap';
+      lapResetBtn.classList.remove('disabled');
+    } else {
+      startStopBtn.textContent = 'Start';
+      startStopBtn.classList.remove('stop');
+      startStopBtn.classList.add('start');
+      lapResetBtn.textContent = 'Reset';
+      if (elapsed === 0) {
+        lapResetBtn.classList.add('disabled');
+      } else {
+        lapResetBtn.classList.remove('disabled');
+      }
+    }
+
+    renderLaps(elapsed);
+  }
+
+  function renderLaps(currentElapsedMs) {
+    if (state.laps.length === 0) {
+      lapsEl.innerHTML = '';
+      return;
+    }
+
+    const durations = [];
+    for (let i = 0; i < state.laps.length; i++) {
+      const prev = i === 0 ? 0 : state.laps[i - 1].elapsed;
+      durations.push(state.laps[i].elapsed - prev);
+    }
+    // include the in-progress lap if running
+    let bestIdx = -1, worstIdx = -1;
+    if (durations.length > 1) {
+      let best = Infinity, worst = -Infinity;
+      durations.forEach((d, i) => {
+        if (d < best) { best = d; bestIdx = i; }
+        if (d > worst) { worst = d; worstIdx = i; }
+      });
+    }
+
+    let html = '';
+    const totalLaps = state.laps.length;
+    for (let i = totalLaps - 1; i >= 0; i--) {
+      const cls = i === bestIdx ? 'best' : (i === worstIdx ? 'worst' : '');
+      const { main, hs } = formatTime(durations[i]);
+      html += `<div class="lap-row ${cls}"><span class="lap-label">Lap ${i + 1}</span><span class="lap-time">${main}${hs}</span></div>`;
+    }
+    lapsEl.innerHTML = html;
+  }
+
+  let rafId = null;
+  function tick() {
+    render();
+    rafId = requestAnimationFrame(tick);
+  }
+  function startTicking() {
+    if (rafId === null) rafId = requestAnimationFrame(tick);
+  }
+  function stopTicking() {
+    if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+  }
+
+  startStopBtn.addEventListener('click', () => {
+    if (state.running) {
+      state.elapsedBeforeStart = currentElapsed();
+      state.running = false;
+      stopTicking();
+    } else {
+      state.startEpoch = Date.now();
+      state.running = true;
+      startTicking();
+    }
+    save();
+    render();
+  });
+
+  lapResetBtn.addEventListener('click', () => {
+    if (state.running) {
+      state.laps.push({ elapsed: currentElapsed() });
+    } else {
+      if (currentElapsed() === 0) return;
+      state.laps = [];
+      state.elapsedBeforeStart = 0;
+    }
+    save();
+    render();
+  });
+
+  // Keep the display correct when the tab regains visibility (e.g. after
+  // being backgrounded on iOS, where timers are throttled/paused).
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      render();
+      if (state.running) startTicking(); else stopTicking();
+    }
+  });
+
+  load();
+  render();
+  if (state.running) startTicking();
+})();
+</script>
+
+</body>
+</html>
