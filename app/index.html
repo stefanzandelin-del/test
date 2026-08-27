@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Lawn Doctor</title>
+  <meta name="description" content="Snap a photo of a lawn problem or flower bed weed and get an identification and remedy." />
+  <meta name="theme-color" content="#2f6b3a" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div id="app">
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon">🌿</span>
+        <span class="brand-name">Lawn Doctor</span>
+      </div>
+      <button id="settingsBtn" class="icon-btn" title="Settings" aria-label="Settings">⚙️</button>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="scan" role="tab" aria-selected="true">Scan</button>
+      <button class="tab" data-tab="history" role="tab" aria-selected="false">History</button>
+    </nav>
+
+    <main>
+      <!-- SCAN TAB -->
+      <section id="tab-scan" class="tab-panel active">
+
+        <div class="mode-switch" role="tablist" aria-label="Scan mode">
+          <button class="mode-btn active" data-mode="lawn" role="tab" aria-selected="true">
+            <span class="mode-icon">🌱</span>
+            <span>Lawn Problem</span>
+          </button>
+          <button class="mode-btn" data-mode="bed" role="tab" aria-selected="false">
+            <span class="mode-icon">🌼</span>
+            <span>Flower Bed ID</span>
+          </button>
+        </div>
+        <p class="mode-hint" id="modeHint">
+          Photograph a patch of lawn that looks off — bare spots, discoloration, strange growth, or weeds in the grass.
+        </p>
+
+        <div class="capture-card">
+          <div id="previewWrap" class="preview-wrap empty">
+            <img id="previewImg" alt="Selected photo preview" hidden />
+            <div id="previewPlaceholder" class="preview-placeholder">
+              <span class="ph-icon">📷</span>
+              <span>No photo yet</span>
+            </div>
+          </div>
+
+          <div class="capture-actions">
+            <label class="btn primary" for="cameraInput">
+              📸 Take Photo
+            </label>
+            <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden />
+
+            <label class="btn secondary" for="fileInput">
+              🖼️ Choose from Library
+            </label>
+            <input id="fileInput" type="file" accept="image/*" hidden />
+          </div>
+
+          <label class="notes-label" for="notesInput">
+            Anything you've noticed? (optional)
+            <textarea id="notesInput" placeholder="e.g. spreading fast, appeared after rain, pets use this area..." rows="2"></textarea>
+          </label>
+
+          <button id="identifyBtn" class="btn identify" disabled>Identify &amp; Suggest Remedy</button>
+        </div>
+
+        <div id="resultArea" class="result-area" hidden></div>
+      </section>
+
+      <!-- HISTORY TAB -->
+      <section id="tab-history" class="tab-panel">
+        <div class="history-header">
+          <h2>Past Scans</h2>
+          <button id="clearHistoryBtn" class="btn tiny danger">Clear All</button>
+        </div>
+        <div id="historyList" class="history-list"></div>
+        <p id="historyEmpty" class="empty-msg" hidden>No scans yet. Identify something in the Scan tab to see it here.</p>
+      </section>
+    </main>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settingsModal" class="modal" hidden>
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Settings</h2>
+          <button id="closeSettingsBtn" class="icon-btn" aria-label="Close">✕</button>
+        </div>
+
+        <label class="field">
+          Anthropic API Key
+          <input id="apiKeyInput" type="password" placeholder="sk-ant-..." autocomplete="off" />
+        </label>
+        <p class="field-hint">
+          Stored only in this browser (localStorage) and sent directly to Anthropic's API — never to any
+          other server. Get a key at
+          <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.
+        </p>
+
+        <label class="field">
+          Model
+          <select id="modelSelect">
+            <option value="claude-sonnet-5">Claude Sonnet 5 (recommended)</option>
+            <option value="claude-opus-5">Claude Opus 5 (highest accuracy)</option>
+            <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (fastest / cheapest)</option>
+          </select>
+        </label>
+
+        <button id="saveSettingsBtn" class="btn primary">Save</button>
+
+        <p class="disclaimer">
+          ⚠️ Identifications and remedies are AI-generated suggestions, not a substitute for a certified
+          arborist, extension office, or agronomist. Always read and follow product labels, check local
+          regulations, and keep pets/children away from treated areas per label instructions.
+        </p>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
