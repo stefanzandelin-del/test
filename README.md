@@ -40,9 +40,30 @@ authoritative removal/control guidance for that specific plant before suggesting
    Console → Settings → Capabilities to make sure web search is enabled for your
    organization/key (each scan uses up to 3 searches, which is billed alongside the normal
    per-token cost — see [Anthropic's pricing](https://claude.com/pricing) for current rates).
-4. You can also deploy `app/` to any static host (GitHub Pages, Netlify, Vercel, Cloudflare
-   Pages, etc.) since there is no backend server involved — the browser talks to Anthropic's
-   API directly.
+
+There's no backend server involved — the browser talks to Anthropic's API directly — so
+`app/` can also be deployed to any static host (Netlify, Vercel, Cloudflare Pages, etc.),
+not just run locally.
+
+## Install on your phone (GitHub Pages)
+
+This repo includes a workflow (`.github/workflows/deploy-pages.yml`) that publishes `app/`
+to GitHub Pages automatically on every push. To turn it on (one-time, needs repo admin
+access):
+
+1. On GitHub: **Settings → Pages → Build and deployment → Source → GitHub Actions**.
+2. Push to this branch (or merge to `main`) to trigger the deploy — check progress under
+   the **Actions** tab.
+3. Once it finishes, your app is live at `https://<your-github-username>.github.io/<repo>/`.
+4. On your phone, open that URL and use your browser's **Add to Home Screen** (Safari:
+   Share → Add to Home Screen; Chrome: ⋮ menu → Add to Home Screen/Install app) to install
+   it like a native app.
+5. Add your Anthropic API key under ⚙️ Settings the first time you open it — that part still
+   happens per-device/browser, since the key is never stored in the deployed code.
+
+Note the app itself (not your API key or scan history) becomes publicly reachable at that
+URL — anyone with the link could open it, but they'd need their own Anthropic API key to run
+a scan.
 
 ## Usage
 
