@@ -1,0 +1,15 @@
+{
+  "name": "Lawn Doctor",
+  "short_name": "Lawn Doctor",
+  "description": "Photograph lawn problems or flower bed weeds and get an AI-powered identification and remedy.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f8f4",
+  "theme_color": "#2f6b3a",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
