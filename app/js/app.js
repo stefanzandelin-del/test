@@ -120,7 +120,7 @@
 
     el.identifyBtn.disabled = true;
     el.resultArea.hidden = false;
-    el.resultArea.innerHTML = `<div class="loading"><span class="spinner"></span> Analyzing photo…</div>`;
+    el.resultArea.innerHTML = `<div class="loading"><span class="spinner"></span> Identifying and looking up removal info…</div>`;
 
     try {
       const { mediaType, data } = dataUrlToBase64(state.imageDataUrl);
@@ -183,8 +183,31 @@
         </div>
 
         ${d.safety_notes ? `<div class="safety-note">⚠️ ${escapeHtml(d.safety_notes)}</div>` : ""}
+        ${sourcesSection(d.sources)}
       </div>
     `;
+  }
+
+  function sourcesSection(sources) {
+    const safe = (sources || []).filter((s) => isHttpUrl(s.url));
+    if (!safe.length) return "";
+    return `
+      <div class="result-section">
+        <h3>Sources</h3>
+        <ul class="sources-list">
+          ${safe.map((s) => `<li><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(s.title || s.url)}</a></li>`).join("")}
+        </ul>
+      </div>
+    `;
+  }
+
+  function isHttpUrl(str) {
+    try {
+      const u = new URL(str);
+      return u.protocol === "http:" || u.protocol === "https:";
+    } catch {
+      return false;
+    }
   }
 
   function listSection(title, items) {

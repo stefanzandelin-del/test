@@ -2,7 +2,8 @@
 
 A mobile-friendly web app for diagnosing lawn problems and identifying weeds vs. desirable
 plants in your flower beds. Take (or upload) a photo, and it uses Claude's vision model to
-identify what you're looking at and suggest a remedy.
+identify what you're looking at, then automatically runs a real web search for current,
+authoritative removal/control guidance for that specific plant before suggesting a remedy.
 
 ## Features
 
@@ -11,6 +12,10 @@ identify what you're looking at and suggest a remedy.
   prevention tips, and timing advice.
 - **Flower Bed ID mode** — photograph a plant growing among your flowers to find out if it's
   a weed/volunteer to remove or a plant worth keeping, plus a removal plan when applicable.
+- **Grounded in real sources** — after identifying the plant, the app has Claude search the
+  web (extension offices, master gardener programs, USDA/RHS, etc.) for how to actually get
+  rid of that specific species, and shows the source links under each result rather than
+  relying only on the model's memorized knowledge.
 - **Camera or photo library** — works on phones (rear camera by default) and desktops.
 - **History** — past scans are saved locally so you can track recurring problems.
 - **Installable PWA** — "Add to Home Screen" for an app-like experience; works offline for
@@ -31,6 +36,10 @@ identify what you're looking at and suggest a remedy.
    LAN IP instead of `localhost`, e.g. `http://192.168.1.23:8080`, so the camera works).
 3. On first load you'll be prompted to enter your API key under the ⚙️ Settings menu. It's
    saved in your browser for next time.
+4. Web search is on by default for most Anthropic accounts. If sources never show up, check
+   Console → Settings → Capabilities to make sure web search is enabled for your
+   organization/key (each scan uses up to 3 searches, which is billed alongside the normal
+   per-token cost — see [Anthropic's pricing](https://claude.com/pricing) for current rates).
 4. You can also deploy `app/` to any static host (GitHub Pages, Netlify, Vercel, Cloudflare
    Pages, etc.) since there is no backend server involved — the browser talks to Anthropic's
    API directly.
